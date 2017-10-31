@@ -8,17 +8,26 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.objects.TextureMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.math.Vector3;
 
-public class TiledTestWithSpriteRenderer extends ApplicationAdapter implements InputProcessor {
+public class TiledTestRenderNewLayer extends ApplicationAdapter implements InputProcessor {
 	Texture img;
 	TiledMap tiledMap;
 	OrthographicCamera camera;
-	OrthogonalTiledMapRendererWithSprites tiledMapRenderer;
-	Texture texture;
+	TiledMapRenderer tiledMapRenderer;
+	SpriteBatch sb;
+	Texture pikachuTexture;
 	Sprite sprite;
+	MapLayer objectLayer;
+
+	TextureRegion pikachuRegion;
 	
 	@Override
 	public void create () {
@@ -29,13 +38,18 @@ public class TiledTestWithSpriteRenderer extends ApplicationAdapter implements I
 		camera.setToOrtho(false, w, h);
 		camera.update();
 
-		texture = new Texture(Gdx.files.internal("pikachu.png"));
-		sprite = new Sprite(texture);
-
 		tiledMap = new TmxMapLoader().load("MyMap.tmx");
-		tiledMapRenderer = new OrthogonalTiledMapRendererWithSprites(tiledMap);
-		tiledMapRenderer.addSprite(sprite);
+		tiledMapRenderer = new OTMRendererNewLayer(tiledMap);
 		Gdx.input.setInputProcessor(this);
+
+		pikachuTexture = new Texture(Gdx.files.internal("pikachu.png"));
+		pikachuRegion = new TextureRegion(pikachuTexture, 64, 64);
+
+		objectLayer = tiledMap.getLayers().get("objects");
+		TextureMapObject textureMapObject = new TextureMapObject(pikachuRegion);
+		textureMapObject.setX(0);
+		textureMapObject.setY(0);
+		objectLayer.getObjects().add(textureMapObject);
 	}
 
 	@Override
@@ -46,8 +60,6 @@ public class TiledTestWithSpriteRenderer extends ApplicationAdapter implements I
 
 		camera.update();
 		tiledMapRenderer.setView(camera);
-
-		// This will take care of rendering our sprites on top of the specified layer.
 		tiledMapRenderer.render();
 	}
 
@@ -82,7 +94,9 @@ public class TiledTestWithSpriteRenderer extends ApplicationAdapter implements I
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
 		Vector3 clickCoordinates = new Vector3(screenX, screenY, 0);
 		Vector3 position = camera.unproject(clickCoordinates);
-		sprite.setPosition(position.x, position.y);
+		TextureMapObject character = (TextureMapObject) tiledMap.getLayers().get("objects").getObjects().get(0);
+		character.setX((float) position.x);
+		character.setY((float) position.y);
 		return false;
 	}
 
